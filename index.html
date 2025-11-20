@@ -1,76 +1,112 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Cache Vulnerability Docs</title>
-<link rel="stylesheet" href="/css/style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cache Test Generator — Neon</title>
+  <link rel="stylesheet" href="css/style.css">
+  <meta name="theme-color" content="#070006">
 </head>
 <body class="theme-dark">
   <header class="topbar">
     <div class="container">
       <div class="brand">
-        <img src="/mnt/data/82129cd8-2523-4b22-ac07-a6a3e6d22578.png" alt="logo" class="logo">
-        <a href="/index.html" class="title">Cache Toolkit</a>
+        <img src="assets/logo.png" alt="logo" class="logo">
+        <a href="index.html" class="title">Cache Test Generator</a>
       </div>
       <nav>
-        <a href="/index.html" class="navlink">Generator</a>
-        <button id="themeToggleDocs" class="btn small">Toggle Theme</button>
+        <a href="docs.html" class="navlink">Documentation</a>
+        <button id="themeToggle" class="btn small">Toggle Theme</button>
       </nav>
     </div>
   </header>
 
-  <main class="container docs">
-    <article class="panel">
-      <h1>Web Cache Vulnerabilities — Knowledge Base</h1>
-      <p class="muted">Complete reference: delimiter matrices, normalization rules, attack patterns and defenses.</p>
+  <main class="container maingrid">
+    <section class="panel">
+      <h1>Interactive Payload Generator</h1>
+      <p class="muted">Select CDN, Backend, Framework → get prioritized delimiters, normalization checks, and ready-to-run payloads.</p>
 
-      <h2>Delimiter Matrix (CDN vs Origin vs Framework)</h2>
-      <table>
-        <tr><th>Entity</th><th># delimiter?</th><th>Notes</th></tr>
-        <tr><td>Cloudflare</td><td>NO</td><td>Often preserves fragments; no hash delim</td></tr>
-        <tr><td>CloudFront</td><td>YES</td><td>Normalizes paths by default</td></tr>
-        <tr><td>Azure</td><td>YES</td><td>Normalizes & may treat # specially</td></tr>
-        <tr><td>Nginx</td><td>YES</td><td>Rewrites may treat %0A as delimiter</td></tr>
-        <tr><td>Apache</td><td>ERROR</td><td>Behavior depends on config</td></tr>
-      </table>
+      <div class="formgrid">
+        <label>CDN
+          <select id="cdn" class="select">
+            <option value="cloudflare">Cloudflare</option>
+            <option value="cloudfront">CloudFront</option>
+            <option value="azure">Azure</option>
+            <option value="fastly">Fastly</option>
+            <option value="imperva">Imperva</option>
+            <option value="gcp">GCP</option>
+            <option value="akamai">Akamai</option>
+          </select>
+        </label>
+        <label>Backend
+          <select id="backend" class="select">
+            <option value="nginx">Nginx</option>
+            <option value="apache">Apache</option>
+            <option value="iis">IIS</option>
+            <option value="gunicorn">Gunicorn</option>
+            <option value="openlite">OpenLite</option>
+            <option value="puma">Puma</option>
+          </select>
+        </label>
+        <label>Framework
+          <select id="framework" class="select">
+            <option value="flask">Flask</option>
+            <option value="django">Django</option>
+            <option value="rails">Rails</option>
+            <option value="spring">Spring</option>
+            <option value="express">Express</option>
+            <option value="laravel">Laravel</option>
+          </select>
+        </label>
+      </div>
 
-      <h2>Normalization Table</h2>
-      <p>Some CDNs normalize encoded dot-segments before evaluating cache rules; others don't.</p>
+      <div class="controls">
+        <button id="go" class="btn primary">Generate</button>
+        <button id="download" class="btn ghost">Download payloads</button>
+        <button id="reset" class="btn ghost">Reset</button>
+      </div>
 
-      <h2>Attack Patterns</h2>
-      <h3>Cache Deception</h3>
-      <ol>
-        <li>Find dynamic endpoint that returns private data</li>
-        <li>Craft static-ext payload (e.g. <code>/account$abc.css</code>)</li>
-        <li>Send cacheable headers to origin and confirm caching</li>
-      </ol>
+      <div class="resultgrid">
+        <div>
+          <h3>Priority delimiters</h3>
+          <div id="delims" class="output"></div>
 
-      <h3>Cache Poisoning</h3>
-      <ol>
-        <li>Find self-reflected response or redirect</li>
-        <li>Use path confusion to store under a popular key</li>
-        <li>Verify via separate client that poisoned content is served</li>
-      </ol>
+          <h3>Normalization checks</h3>
+          <div id="norms" class="output"></div>
 
-      <h2>Payload Templates</h2>
-      <pre class="payloads">/myAccount$aaa.css
-/myAccount%24aaa.js
-/myAccount$..%2Fstatic%2Fmain.js
-/random/..%2Fhome
-/main.js#/../home
-</pre>
+          <h3>Framework notes</h3>
+          <div id="fnotes" class="output"></div>
+        </div>
 
-      <h2>Defenses</h2>
-      <ul>
-        <li>Cache-Control: no-store, private for dynamic responses</li>
-        <li>Align CDN + origin parsing rules</li>
-        <li>Disable suffix forwarding after delimiters</li>
+        <div>
+          <div class="toolbar">
+            <h3>Generated payloads</h3>
+            <div>
+              <button id="copyAll" class="btn tiny">Copy</button>
+            </div>
+          </div>
+          <pre id="payloadText" class="payloads">(none)</pre>
+        </div>
+      </div>
+
+    </section>
+
+    <aside class="panel sidebar">
+      <h3>Quick checklist</h3>
+      <ul class="muted small">
+        <li>Find cacheable endpoints (X-Cache / CF-Cache-Status)</li>
+        <li>Test encoded vs plain</li>
+        <li>Test dot-seg normalization</li>
+        <li>Try static ext & dir payloads</li>
       </ul>
-    </article>
+
+      <h3>Export</h3>
+      <p class="muted small">Payloads file will be downloaded as <code>payloads.txt</code>.</p>
+    </aside>
   </main>
 
-  <footer class="foot">Docs • Cache Toolkit</footer>
-  <script src="/js/main.js"></script>
+  <footer class="foot">Janpreet Singh • Cache Vulnerability Toolkit</footer>
+
+  <script src="js/main.js"></script>
 </body>
 </html>
