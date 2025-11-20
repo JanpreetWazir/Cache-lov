@@ -1,112 +1,168 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cache Test Generator — Neon</title>
-  <link rel="stylesheet" href="css/style.css">
-  <meta name="theme-color" content="#070006">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cache Vulnerability Knowledge Base</title>
+<style>
+  body{margin:0;background:#050006;font-family:Inter,system-ui,Arial;color:#e6d9f0;line-height:1.55;padding:24px}
+  h1,h2,h3{color:#ff2fa6;text-shadow:0 0 12px rgba(255,47,166,0.35)}
+  h1{margin-top:0;font-size:26px}
+  h2{margin-top:32px;font-size:20px;border-bottom:1px solid rgba(255,47,166,0.25);padding-bottom:6px}
+  h3{margin-top:22px;font-size:17px}
+  .card{background:rgba(255,47,166,0.05);border:1px solid rgba(255,47,166,0.15);padding:14px;border-radius:10px;margin:16px 0}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+  th,td{border:1px solid rgba(255,47,166,0.25);padding:8px 10px;text-align:left}
+  th{background:rgba(255,47,166,0.15)}
+  code{background:#120014;padding:2px 5px;border-radius:4px;color:#ff93d9}
+  .note{color:#bba3c7;font-size:13px}
+  a{color:#ff2fa6}
+</style>
 </head>
-<body class="theme-dark">
-  <header class="topbar">
-    <div class="container">
-      <div class="brand">
-        <img src="assets/logo.png" alt="logo" class="logo">
-        <a href="index.html" class="title">Cache Test Generator</a>
-      </div>
-      <nav>
-        <a href="docs.html" class="navlink">Documentation</a>
-        <button id="themeToggle" class="btn small">Toggle Theme</button>
-      </nav>
-    </div>
-  </header>
+<body>
+<h1>Web Cache Vulnerabilities — Documentation & Knowledge Base</h1>
+<p class="note">This page collects all research, tables, delimiter rules, behaviors, attack vectors, payload methodologies and logic used in the generator (/index.html).</p>
 
-  <main class="container maingrid">
-    <section class="panel">
-      <h1>Interactive Payload Generator</h1>
-      <p class="muted">Select CDN, Backend, Framework → get prioritized delimiters, normalization checks, and ready-to-run payloads.</p>
+<h2>1. URL Parsing Discrepancies</h2>
+<p>Cache poisoning and cache deception arise from inconsistent parsing of:</p>
+<ul>
+  <li>Delimiters</li>
+  <li>Encodings</li>
+  <li>Dot-segments <code>/../</code></li>
+  <li>Normalization rules</li>
+</ul>
 
-      <div class="formgrid">
-        <label>CDN
-          <select id="cdn" class="select">
-            <option value="cloudflare">Cloudflare</option>
-            <option value="cloudfront">CloudFront</option>
-            <option value="azure">Azure</option>
-            <option value="fastly">Fastly</option>
-            <option value="imperva">Imperva</option>
-            <option value="gcp">GCP</option>
-            <option value="akamai">Akamai</option>
-          </select>
-        </label>
-        <label>Backend
-          <select id="backend" class="select">
-            <option value="nginx">Nginx</option>
-            <option value="apache">Apache</option>
-            <option value="iis">IIS</option>
-            <option value="gunicorn">Gunicorn</option>
-            <option value="openlite">OpenLite</option>
-            <option value="puma">Puma</option>
-          </select>
-        </label>
-        <label>Framework
-          <select id="framework" class="select">
-            <option value="flask">Flask</option>
-            <option value="django">Django</option>
-            <option value="rails">Rails</option>
-            <option value="spring">Spring</option>
-            <option value="express">Express</option>
-            <option value="laravel">Laravel</option>
-          </select>
-        </label>
-      </div>
+<h3>1.1 Delimiter Behavior by CDN (Key Parser)</h3>
+<table>
+<tr><th>CDN</th><th>Is <code>#</code> a Delimiter?</th></tr>
+<tr><td>Cloudflare</td><td>NO</td></tr>
+<tr><td>CloudFront</td><td>YES</td></tr>
+<tr><td>GCP</td><td>ERROR</td></tr>
+<tr><td>Azure</td><td>YES</td></tr>
+<tr><td>Imperva</td><td>NO</td></tr>
+<tr><td>Fastly</td><td>NO</td></tr>
+</table>
 
-      <div class="controls">
-        <button id="go" class="btn primary">Generate</button>
-        <button id="download" class="btn ghost">Download payloads</button>
-        <button id="reset" class="btn ghost">Reset</button>
-      </div>
+<h3>1.2 Delimiter Behavior — Origin Servers</h3>
+<table>
+<tr><th>Origin Server</th><th> <code>#</code> Delimiter?</th></tr>
+<tr><td>Apache</td><td>ERROR</td></tr>
+<tr><td>Nginx</td><td>YES</td></tr>
+<tr><td>IIS</td><td>ERROR</td></tr>
+<tr><td>Gunicorn</td><td>YES</td></tr>
+<tr><td>OpenLite</td><td>NO</td></tr>
+<tr><td>Puma</td><td>YES</td></tr>
+</table>
 
-      <div class="resultgrid">
-        <div>
-          <h3>Priority delimiters</h3>
-          <div id="delims" class="output"></div>
+<h3>1.3 Framework-Level Delimiters</h3>
+<table>
+<tr><th>Framework</th><th> <code>#</code> Delimiter?</th></tr>
+<tr><td>Spring</td><td>ERROR</td></tr>
+<tr><td>Rails</td><td>YES</td></tr>
+<tr><td>Django</td><td>NO</td></tr>
+<tr><td>Flask</td><td>YES</td></tr>
+<tr><td>Express</td><td>NO</td></tr>
+<tr><td>Laravel</td><td>YES</td></tr>
+</table>
 
-          <h3>Normalization checks</h3>
-          <div id="norms" class="output"></div>
+<h2>2. Normalization Behavior</h2>
+<p>Caches and backends normalize URLs differently. Example test case: <code>/hello/..%2Fworld</code>.</p>
+<table>
+<tr><th>Provider</th><th>Normalized?</th></tr>
+<tr><td>Cloudflare</td><td>No</td></tr>
+<tr><td>CloudFront</td><td>Yes</td></tr>
+<tr><td>GCP</td><td>No</td></tr>
+<tr><td>Azure</td><td>Yes</td></tr>
+<tr><td>Imperva</td><td>No</td></tr>
+<tr><td>Fastly</td><td>No</td></tr>
+</table>
 
-          <h3>Framework notes</h3>
-          <div id="fnotes" class="output"></div>
-        </div>
+<h3>Backend Normalization</h3>
+<table>
+<tr><th>Origin Server</th><th>Normalized?</th></tr>
+<tr><td>Apache</td><td>Yes</td></tr>
+<tr><td>Nginx</td><td>No</td></tr>
+<tr><td>IIS</td><td>Yes</td></tr>
+<tr><td>Gunicorn</td><td>Yes</td></tr>
+<tr><td>OpenLite</td><td>No</td></tr>
+<tr><td>Puma</td><td>Yes</td></tr>
+</table>
 
-        <div>
-          <div class="toolbar">
-            <h3>Generated payloads</h3>
-            <div>
-              <button id="copyAll" class="btn tiny">Copy</button>
-            </div>
-          </div>
-          <pre id="payloadText" class="payloads">(none)</pre>
-        </div>
-      </div>
+<h2>3. Critical Attack Families</h2>
 
-    </section>
+<h3>3.1 Web Cache Deception</h3>
+<div class="card">
+<b>Goal:</b> Store dynamic/sensitive responses as static files in CDN cache.<br><br>
+<b>Techniques:</b>
+<ul>
+  <li>Static extension deception (<code>.css</code>, <code>.js</code>, etc.)</li>
+  <li>Static directory deception (<code>/static/</code>, <code>/assets/</code>)</li>
+  <li>Static file target (<code>/robots.txt</code>, <code>/favicon.ico</code>)</li>
+  <li>Using backend delimiters like <code>$</code>, <code>;</code>, <code>.</code>, <code>%00</code></li>
+</ul>
+</div>
 
-    <aside class="panel sidebar">
-      <h3>Quick checklist</h3>
-      <ul class="muted small">
-        <li>Find cacheable endpoints (X-Cache / CF-Cache-Status)</li>
-        <li>Test encoded vs plain</li>
-        <li>Test dot-seg normalization</li>
-        <li>Try static ext & dir payloads</li>
-      </ul>
+<h3>3.2 Arbitrary Web Cache Poisoning</h3>
+<div class="card">
+<b>Goal:</b> Inject attacker-controlled content into popular resources (<code>/home</code>, <code>/main.js</code>).<br><br>
+<b>Vectors:</b>
+<ul>
+  <li>Key normalization abuse</li>
+  <li>Delimiter mismatch (<code>#</code> front-end vs backend)</li>
+  <li>Path traversal in normalized key</li>
+  <li>Self-reflected content poisoning</li>
+</ul>
+</div>
 
-      <h3>Export</h3>
-      <p class="muted small">Payloads file will be downloaded as <code>payloads.txt</code>.</p>
-    </aside>
-  </main>
+<h2>4. Key Exploitation Techniques</h2>
 
-  <footer class="foot">Janpreet Singh • Cache Vulnerability Toolkit</footer>
+<h3>4.1 Using <code>#</code> Fragment (Encoded + Raw)</h3>
+<p>Browser strips raw <code>#</code>, but encoded <code>%23</code> may pass to CDN, creating key confusion.</p>
+<table>
+<tr><th>URL Sent</th><th>Cache Key</th><th>Origin Path</th></tr>
+<tr><td>/main.js#/../home</td><td>/main.js</td><td>/home</td></tr>
+<tr><td>/any_page#/../redirect</td><td>/any_page</td><td>/redirect</td></tr>
+</table>
 
-  <script src="js/main.js"></script>
+<h3>4.2 Static Extension Deception</h3>
+<table>
+<tr><th>Browser</th><th>Cache</th><th>Origin</th></tr>
+<tr><td>/myAccount$static.css</td><td>/myAccount$static.css</td><td>/myAccount</td></tr>
+</table>
+
+<h3>4.3 Encoded Hash Deception</h3>
+<table>
+<tr><th>Browser</th><th>Cache</th><th>Origin</th></tr>
+<tr><td>/myAccount%23static.css</td><td>/myAccount%23static.css</td><td>/myAccount#static.css</td></tr>
+</table>
+
+<h3>4.4 Static Directory Normalization Attack</h3>
+<table>
+<tr><th>Browser</th><th>Cache</th><th>Origin</th></tr>
+<tr><td>/myAccount$/..%2Fstatic/any</td><td>/static/any</td><td>/myAccount</td></tr>
+</table>
+
+<h2>5. Testing Methodology (Step-by-Step)</h2>
+<ol>
+  <li>Detect cacheable endpoint (check <code>X-Cache</code>, <code>CF-Cache-Status</code>)</li>
+  <li>Test delimiter behavior (raw + encoded)</li>
+  <li>Test normalization (<code>/../</code>, <code>.%2e</code>, encoded slash)</li>
+  <li>Test CDN rewriting / forwarding</li>
+  <li>Generate payloads using index.html</li>
+  <li>Verify poisoning via separate victim request</li>
+</ol>
+
+<h2>6. Defense Overview</h2>
+<ul>
+  <li><code>Cache-Control: no-store, private</code> for dynamic pages</li>
+  <li>Disable path normalization differences</li>
+  <li>Disable delimiter-based suffix forwarding</li>
+  <li>Unify CDN + backend parsing logic</li>
+  <li>Strict static extension/directory rules</li>
+</ul>
+
+<h2>7. Reference File</h2>
+<p>Uploaded image was processed from:<br><code>/mnt/data/82129cd8-2523-4b22-ac07-a6a3e6d22578.png</code></p>
+
 </body>
 </html>
