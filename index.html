@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cache Vulnerability Docs</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="theme-dark">
+  <header class="topbar">
+    <div class="container">
+      <div class="brand">
+        <img src="/mnt/data/82129cd8-2523-4b22-ac07-a6a3e6d22578.png" alt="logo" class="logo">
+        <a href="/index.html" class="title">Cache Toolkit</a>
+      </div>
+      <nav>
+        <a href="/index.html" class="navlink">Generator</a>
+        <button id="themeToggleDocs" class="btn small">Toggle Theme</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container docs">
+    <article class="panel">
+      <h1>Web Cache Vulnerabilities — Knowledge Base</h1>
+      <p class="muted">Complete reference: delimiter matrices, normalization rules, attack patterns and defenses.</p>
+
+      <h2>Delimiter Matrix (CDN vs Origin vs Framework)</h2>
+      <table>
+        <tr><th>Entity</th><th># delimiter?</th><th>Notes</th></tr>
+        <tr><td>Cloudflare</td><td>NO</td><td>Often preserves fragments; no hash delim</td></tr>
+        <tr><td>CloudFront</td><td>YES</td><td>Normalizes paths by default</td></tr>
+        <tr><td>Azure</td><td>YES</td><td>Normalizes & may treat # specially</td></tr>
+        <tr><td>Nginx</td><td>YES</td><td>Rewrites may treat %0A as delimiter</td></tr>
+        <tr><td>Apache</td><td>ERROR</td><td>Behavior depends on config</td></tr>
+      </table>
+
+      <h2>Normalization Table</h2>
+      <p>Some CDNs normalize encoded dot-segments before evaluating cache rules; others don't.</p>
+
+      <h2>Attack Patterns</h2>
+      <h3>Cache Deception</h3>
+      <ol>
+        <li>Find dynamic endpoint that returns private data</li>
+        <li>Craft static-ext payload (e.g. <code>/account$abc.css</code>)</li>
+        <li>Send cacheable headers to origin and confirm caching</li>
+      </ol>
+
+      <h3>Cache Poisoning</h3>
+      <ol>
+        <li>Find self-reflected response or redirect</li>
+        <li>Use path confusion to store under a popular key</li>
+        <li>Verify via separate client that poisoned content is served</li>
+      </ol>
+
+      <h2>Payload Templates</h2>
+      <pre class="payloads">/myAccount$aaa.css
+/myAccount%24aaa.js
+/myAccount$..%2Fstatic%2Fmain.js
+/random/..%2Fhome
+/main.js#/../home
+</pre>
+
+      <h2>Defenses</h2>
+      <ul>
+        <li>Cache-Control: no-store, private for dynamic responses</li>
+        <li>Align CDN + origin parsing rules</li>
+        <li>Disable suffix forwarding after delimiters</li>
+      </ul>
+    </article>
+  </main>
+
+  <footer class="foot">Docs • Cache Toolkit</footer>
+  <script src="/js/main.js"></script>
+</body>
+</html>
